@@ -166,7 +166,9 @@ fun KeyContent(viewModel: MainViewModel, databaseInitialized: Boolean) {
                 ) {
                     Text(
                         text = "Saved Key: ${savedKey.keyID}",
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { viewModel.setKey(savedKey.keyID) }
                     )
 
                     IconButton(
