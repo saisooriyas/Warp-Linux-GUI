@@ -6,6 +6,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SchemaUtils
+
 
 object Keys : Table() {
     val id = integer("id").autoIncrement()
@@ -16,52 +19,74 @@ object Keys : Table() {
 
 data class Key(val id: Int, val keyID: String)
 
+// Application configuration class
 class AppConfig private constructor() {
     companion object {
+        // User home directory (cross-platform)
         private val userHome = System.getProperty("user.home")
+
+        // Application directory within the user's home directory
         val appDir = File(userHome, ".myapp").also { it.mkdirs() }
+
+        // Log file within the application directory
         val logFile = File(appDir, "app_log.txt")
+
+        // Database file within the application directory
         val dbFile = File(appDir, "app_database")
     }
 }
 
+// Logger object to log messages and exceptions
 object Logger {
     private val logFile = AppConfig.logFile
-
-//    init {
-//        logFile.createNewFile() // Create the file if it doesn't exist
-//    }
 
     fun log(message: String, e: Exception? = null) {
         val timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
         val logMessage = "[$timestamp] $message\n"
+
+        // Append the log message to the log file
         logFile.appendText(logMessage)
+
+        // If there's an exception, print its stack trace to the log file
         e?.printStackTrace(logFile.printWriter())
     }
 }
 
+// Function to initialize the database
 fun initDatabase(): Boolean {
-    return try {
-        Logger.log("Initializing database...")
-        val dbUrl = "jdbc:h2:${AppConfig.dbFile.absolutePath}"
-        Logger.log("Database URL going to start connection: $dbUrl ")
+    Logger.log("Initializing database...")
+
+    // Construct the database URL using the file path (cross-platform)
+    val dbUrl = "jdbc:h2:${AppConfig.dbFile.absolutePath}"
+    Logger.log("Current working directory: " + System.getProperty("user.dir"))
+    logFilePermissions()
+    Logger.log("Database URL going to start connection: $dbUrl ")
+
+    // Connect to the database
+    try {
         Database.connect(dbUrl, driver = "org.h2.Driver")
-
-
-        Logger.log("Connecting to database: $dbUrl")
-        Database.connect(dbUrl, driver = "org.h2.Driver")
-        Logger.log("Connected to database")
-
-        transaction {
-            Logger.log("Creating schema")
-            SchemaUtils.create(Keys)
-        }
-        Logger.log("Database initialized successfully")
-        true
-    } catch (e: Exception) {
+    }
+    catch (e: Exception) {
         Logger.log("Failed to initialize database: ${e.message}", e)
         throw DatabaseInitializationException("Failed to initialize database", e)
     }
+    Logger.log("Connected to database")
+
+    // Create the database schema
+    transaction {
+        Logger.log("Creating schema")
+        SchemaUtils.create(Keys)
+    }
+
+    Logger.log("Database initialized successfully")
+    return true
+}
+
+fun logFilePermissions() {
+    val appDir = AppConfig.appDir
+    val dbFile = AppConfig.dbFile
+    Logger.log("App directory exists: ${appDir.exists()}, is writable: ${appDir.canWrite()}")
+    Logger.log("DB file exists: ${dbFile.exists()}, is writable: ${dbFile.canWrite()}")
 }
 
 class DatabaseInitializationException(message: String, cause: Throwable? = null) : Exception(message, cause)
