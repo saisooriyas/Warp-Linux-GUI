@@ -36,6 +36,8 @@ dependencies {
     // Add this line for SLF4J Simple Logger
     implementation("org.slf4j:slf4j-simple:2.0.5")
     implementation("com.h2database:h2:2.2.224")
+    //implementation("org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.8.12")
+    implementation("org.jetbrains.skiko:skiko-jvm:0.6.7")
 }
 
 compose.desktop {
@@ -49,3 +51,9 @@ compose.desktop {
         }
     }
 }
+
+tasks.withType<Jar> {
+    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+

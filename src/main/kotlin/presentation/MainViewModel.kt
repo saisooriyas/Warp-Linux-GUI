@@ -33,47 +33,12 @@ class MainViewModel {
     private val _currentModeUi = MutableStateFlow("WARP")
     val currentModeUi = _currentModeUi.asStateFlow()
 
-    private val _key = MutableStateFlow("")
-
     var errorMessage by mutableStateOf<String?>(null)
 
     init {
         switchTo1111WithWarp()
         checkStatus()
     }
-
-//    fun saveKey(key: String) {
-//        // Validate key length
-//        if (key.length == 26) {
-//            CoroutineScope(Dispatchers.IO).launch {
-//                withContext(Dispatchers.IO) {
-//                    queries.insertKey(key)
-//                }
-//                // Clear error message on successful save
-//                errorMessage = null
-//            }
-//        } else {
-//            // Set error message if key length is incorrect
-//            errorMessage = "Wrong input: Key must be exactly 32 characters long. Provided key length is ${key.length}."
-//        }
-//    }
-//
-//    fun getKey(key: String): String? {
-//        return queries.getKey(key).executeAsOneOrNull()
-//    }
-//
-//    fun getAllKeys(): Flow<List<String>> {
-//        return queries.getAllKey()
-//            .asFlow()
-//            .mapToList(Dispatchers.IO) // Executes on IO thread
-//            .map { keyList ->
-//                keyList.map { key -> key } // Ensure 'key_id' is the correct property name
-//            }
-//    }
-//
-//    fun deleteKey(key: String) {
-//        return queries.deleteKey(key)
-//    }
 
     fun setKey(key: String) {
         viewModelScope.launch {
